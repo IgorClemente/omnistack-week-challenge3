@@ -17,12 +17,16 @@ import MapView, { Marker, Callout } from "react-native-maps";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import api from "../../services/api";
-import { connect, disconnect } from "../../services/socket";
+import { connect, disconnect, subscribeToNewDevs } from "../../services/socket";
 
 export default function Main({ navigation }) {
   const [currentRegion, setCurrentRegion] = useState(null);
   const [techs, setTechs] = useState("");
   const [devs, setDevs] = useState([]);
+
+  useEffect(() => {
+    subscribeToNewDevs(dev => setDevs([...devs, dev]));
+  }, [devs]);
 
   useEffect(() => {
     async function loadInitialMap() {
@@ -63,6 +67,8 @@ export default function Main({ navigation }) {
   }
 
   function setupWebSocket() {
+    disconnect();
+
     const { latitude, longitude } = currentRegion;
 
     connect({ latitude, longitude, techs });
@@ -81,6 +87,7 @@ export default function Main({ navigation }) {
       >
         {devs.map(dev => (
           <Marker
+            key={dev._id}
             coordinate={{
               latitude: dev.location.coordinates[1],
               longitude: dev.location.coordinates[0]
